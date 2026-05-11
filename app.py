@@ -24,7 +24,6 @@ st.markdown("""
 
 st.title("🛒 AgentMart")
 st.markdown("**Decentralized Agent-as-a-Service Marketplace on 0G**")
-st.caption("Track 3: Agentic Economy & Autonomous Applications")
 
 if "contracts" not in st.session_state:
     st.session_state.contracts = ContractUtils()
