@@ -1,3 +1,16 @@
 streamlit
 web3
+eth-account
 python-dotenv
+pandas
+apscheduler
+sqlalchemy
+langchain
+langgraph
+langchain-openai
+openai
+python-dateutil
+dateparser
+tenacity
+requests
+cryptography
