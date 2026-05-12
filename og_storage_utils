@@ -1,0 +1,53 @@
+import tempfile
+import os
+
+from core.indexer import Indexer
+from core.file import ZgFile
+from eth_account import Account
+
+
+INDEXER_RPC = "https://indexer-storage-testnet-turbo.0g.ai"
+BLOCKCHAIN_RPC = "https://evmrpc-testnet.0g.ai"
+
+
+class OGStorageUtils:
+
+    def upload_encrypted_memory(self, encrypted_text: str):
+
+        try:
+            private_key = os.getenv("PRIVATE_KEY")
+
+            account = Account.from_key(private_key)
+            indexer = Indexer(INDEXER_RPC)
+
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as tmp:
+                tmp.write(encrypted_text.encode())
+                tmp_path = tmp.name
+
+            file = ZgFile.from_file_path(tmp_path)
+
+            result, err = indexer.upload(
+                file,
+                BLOCKCHAIN_RPC,
+                account,
+                {
+                    "tags": b"\x00",
+                    "finalityRequired": True,
+                    "taskSize": 10,
+                    "expectedReplica": 1,
+                    "skipTx": False,
+                    "account": account,
+                }
+            )
+
+            file.close()
+            os.remove(tmp_path)
+
+            if err:
+                return None
+
+            return result["rootHash"]
+
+        except Exception as e:
+            print(e)
+            return None
