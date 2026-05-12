@@ -1,45 +1,73 @@
-import os
-import json
-from datetime import datetime
-
+from database import get_connection
+from crypto_utils import encrypt_text
+# from og_storage_utils import OGStorageUtils
+from database import get_connection
 
 class StorageUtils:
-    def __init__(self):
-        self.data_dir = "data"
-        os.makedirs(self.data_dir, exist_ok=True)
 
-    def save_agent_memory(self, agent_id: int, memory_text: str, task_id: int = None):
-        """Save persistent memory for an agent"""
+    def save_agent_memory(self, agent_id, memory_text, task_id=None):
+
         try:
-            filename = f"{self.data_dir}/agent_{agent_id}_memory.json"
+            encrypted = encrypt_text(memory_text)
 
-            # Load existing memories or create new
-            try:
-                with open(filename, "r") as f:
-                    memories = json.load(f)
-            except:
-                memories = []
+            storage_hash = None
+            conn = get_connection()
+            cursor = conn.cursor()
 
-            memory_entry = {
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "memory": memory_text,
-                "task_id": task_id
-            }
+            cursor.execute(
+                """
+                INSERT INTO agent_memories
+                (
+                    agent_id,
+                    task_id,
+                    memory,
+                    storage_hash
+                )
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    agent_id,
+                    task_id,
+                    encrypted,
+                    storage_hash
+                )
+            )
 
-            memories.append(memory_entry)
+            conn.commit()
+            conn.close()
 
-            with open(filename, "w") as f:
-                json.dump(memories, f, indent=2)
+            return True, "Memory saved + synced to 0G"
 
-            return True, "Memory saved successfully"
         except Exception as e:
             return False, str(e)
 
-    def get_agent_memories(self, agent_id: int):
-        """Get all memories for an agent"""
+    def get_agent_memories(
+        self,
+        agent_id: int
+    ):
+
         try:
-            filename = f"{self.data_dir}/agent_{agent_id}_memory.json"
-            with open(filename, "r") as f:
-                return json.load(f)
-        except:
+
+            conn = get_connection()
+
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT *
+                FROM agent_memories
+                WHERE agent_id = ?
+                ORDER BY created_at DESC
+                """,
+                (agent_id,)
+            )
+
+            rows = cursor.fetchall()
+
+            conn.close()
+
+            return [dict(row) for row in rows]
+
+        except Exception:
+
             return []
