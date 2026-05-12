@@ -1,6 +1,7 @@
 import streamlit as st
 from contract_utils import ContractUtils
 from storage_utils import StorageUtils
+from database import initialize_database
 
 st.set_page_config(page_title="AgentMart", page_icon="🛒", layout="wide", initial_sidebar_state="expanded")
 
@@ -22,8 +23,11 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+initialize_database()
+
 st.title("🛒 AgentMart")
 st.markdown("**Decentralized Agent-as-a-Service Marketplace on 0G**")
+st.caption("Track 3: Agentic Economy & Autonomous Applications")
 
 if "contracts" not in st.session_state:
     st.session_state.contracts = ContractUtils()
@@ -265,10 +269,15 @@ with tab4:
         if memories:
             st.write("### Memory History")
             for mem in reversed(memories):
-                with st.expander(f"{mem['timestamp']}"):
+                with st.expander(f"{mem['created_at']}"):
                     st.write(mem['memory'])
+                    if mem["storage_hash"]:
+                        st.caption(f"Synced to 0G: {mem['storage_hash'][:12]}...")
+                    else:
+                        st.warning("Not synced to 0G")
         else:
             st.info("This agent has no memories yet.")
+
 
 # Dashboard
 with tab5:
